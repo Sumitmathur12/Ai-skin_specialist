@@ -2,6 +2,7 @@ import base64
 import os
 import re
 from io import BytesIO
+from pathlib import Path
 
 from dotenv import load_dotenv
 from groq import Groq
@@ -34,35 +35,36 @@ def clean_text_for_speech(text):
     if not text:
         return ""
 
+    # 1. Take text after </think> if present
     if "</think>" in text:
         text = text.split("</think>")[-1].strip()
 
-    patterns = [
-        r"\bBased on\b.*$",
-        r"\bHello\b.*$",
-        r"\bHi\b.*$",
-        r"\bFor\b.*$",
-        r"\bI recommend\b.*$",
-        r"\bIt looks\b.*$",
-        r"\bTo help\b.*$",
-        r"\bManaging\b.*$",
-    ]
+    # 2. Strip unclosed <think> tag if present before drafts/paragraphs
+    text = re.sub(r"^<think>.*?(?=(?:Draft\s*\d*|Based on|Hello|Hi|I recommend|It looks|To help|Managing|\n\n|$))", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
 
-    for pat in patterns:
-        matches = list(re.finditer(pat, text, re.DOTALL | re.IGNORECASE))
-        if matches:
-            extracted = matches[-1].group(0).strip()
-            return re.sub(r"[*#`_]", "", extracted).strip()
+    # 3. Remove review block (e.g. 4. Review against constraints...)
+    text = re.sub(r"\d+\.\s*Review against constraints.*$", "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"Review against constraints.*$", "", text, flags=re.DOTALL | re.IGNORECASE)
 
-    cleaned = re.sub(r"<think>.*?(?:</think>|$)", "", text, flags=re.DOTALL)
-    cleaned = re.sub(
-        r"(?:Doctor'?s Guidance|Here'?s a thinking|Thinking Process|Thought Process).*?(?=\n\n|$)",
-        "",
-        cleaned,
-        flags=re.DOTALL | re.IGNORECASE,
-    )
-    cleaned = re.sub(r"[*#`_]", "", cleaned).strip()
-    return cleaned
+    # 4. If there are Drafts (Draft 1, Draft 2, Draft 3), pick the last draft's content!
+    draft_matches = list(re.finditer(r"Draft\s*\d*[^:]*:\s*(.*?)(?=(?:Draft\s*\d*|\d+\.|$))", text, re.DOTALL | re.IGNORECASE))
+    if draft_matches:
+        text = draft_matches[-1].group(1).strip()
+
+    # 5. Filter out any remaining metadata / checklist lines
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    clean_lines = []
+    for line in lines:
+        if re.search(r"^(<think>|Careful skin|General info|Confident|Reassurance|Constraint|Thinking|Thought|Analyze|\d+\.|\*|\-)", line, re.IGNORECASE):
+            continue
+        clean_lines.append(line)
+
+    result = " ".join(clean_lines) if clean_lines else text
+
+    # 6. Remove sentence count notes e.g. (3 sentences) and markdown symbols
+    result = re.sub(r"\(\d+\s*sentences?\)", "", result, flags=re.IGNORECASE)
+    result = re.sub(r"[*#`_]", "", result).strip()
+    return result
 
 
 def brain_of_the_doctor(patient_text, image_filepath=None, video_filepath=None):
@@ -82,7 +84,7 @@ def brain_of_the_doctor(patient_text, image_filepath=None, video_filepath=None):
         "You are a confident, natural doctor specializing in skin care. Speak with the reassurance, clarity, and authority of a real doctor. "
         "Limit your entire response to two or three sentences maximum. "
         "If the patient has provided a video, explain that you are reviewing the uploaded image because this model cannot process video directly. "
-        "Do not use any special characters, symbols, asterisks, or markdown formatting in your response because it will be converted directly to audio.\n\n"
+        "CRITICAL: Output ONLY the final plain text doctor response to the patient. Do NOT output any thinking steps, Draft 1/2/3, bullet points, checklists, or constraint reviews.\n\n"
         f"Patient text: {patient_text}"
     )
 
