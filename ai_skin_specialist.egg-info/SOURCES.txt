@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+ai_skin_specialist.egg-info/PKG-INFO
+ai_skin_specialist.egg-info/SOURCES.txt
+ai_skin_specialist.egg-info/dependency_links.txt
+ai_skin_specialist.egg-info/requires.txt
+ai_skin_specialist.egg-info/top_level.txt

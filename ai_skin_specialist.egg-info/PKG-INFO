@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: ai-skin-specialist
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: anthropic>=0.116.0
+Requires-Dist: deepgram-sdk>=7.4.0
+Requires-Dist: gradio>=6.19.0
+Requires-Dist: groq>=1.5.0
+Requires-Dist: gtts>=2.5.4
+Requires-Dist: numpy>=2.4.6
+Requires-Dist: path>=17.1.1
+Requires-Dist: pillow>=12.3.0
+Requires-Dist: pyaudio>=0.2.14
+Requires-Dist: pydub>=0.25.1
+Requires-Dist: python-dotenv>=1.2.2
+Requires-Dist: sounddevice>=0.5.5
+Requires-Dist: speechrecognition>=3.17.0
