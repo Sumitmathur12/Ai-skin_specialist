@@ -11,8 +11,18 @@ from PIL import Image
 load_dotenv()
 
 
-def encode_image_for_groq(filepath):
-    image = Image.open(filepath)
+def encode_image_for_groq(image_input):
+    if isinstance(image_input, Image.Image):
+        image = image_input
+    elif isinstance(image_input, (str, Path)):
+        image = Image.open(image_input)
+    elif hasattr(image_input, "name"):
+        image = Image.open(image_input.name)
+    elif isinstance(image_input, dict) and "path" in image_input:
+        image = Image.open(image_input["path"])
+    else:
+        image = Image.open(image_input)
+
     image.thumbnail((1024, 1024))
 
     buffer = BytesIO()

@@ -20,6 +20,9 @@ HEAD = """
 """
 
 CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,450;9..144,560;9..144,650&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
 /* ------------------------------------------------------------------ *
  *  Token system — "clinical hologram"                                *
  *  A dermatoscope readout floating in a dark exam-room glass panel.  *
@@ -530,7 +533,14 @@ body, .gradio-container {
 
 /* ---------------- Icon base ---------------- */
 
-.ais-icon { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24; line-height: 1; }
+.ais-icon {
+    font-family: 'Material Symbols Outlined' !important;
+    font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+}
 
 /* ---------------- Gradio component skinning (dark glass) ---------------- */
 
@@ -701,7 +711,7 @@ with gr.Blocks(title=APP_TITLE, head=HEAD) as iface:
 
                     with gr.Row(elem_classes="ais-media-row"):
                         image_input = gr.Image(
-                            type="filepath",
+                            type="pil",
                             label="Skin Image",
                             height=280,
                         )
@@ -792,17 +802,25 @@ with gr.Blocks(title=APP_TITLE, head=HEAD) as iface:
     )
 
 
+import tempfile
+
+cache_dir = Path(__file__).parent / "doctor_audio_cache"
+try:
+    cache_dir.mkdir(exist_ok=True)
+except Exception:
+    cache_dir = Path(tempfile.gettempdir()) / "doctor_audio_cache"
+    cache_dir.mkdir(exist_ok=True)
+
+allowed_paths = [
+    str(cache_dir.resolve()),
+    str(Path(tempfile.gettempdir()).resolve()),
+    "/tmp",
+    "/tmp/gradio",
+]
+
 app = FastAPI()
-app = gr.mount_gradio_app(app, iface, path="/")
+app = gr.mount_gradio_app(app, iface, path="/", allowed_paths=allowed_paths)
 
 
 if __name__ == "__main__":
-    try:
-        cache_dir = Path(__file__).parent / "doctor_audio_cache"
-        cache_dir.mkdir(exist_ok=True)
-    except Exception:
-        import tempfile
-        cache_dir = Path(tempfile.gettempdir()) / "doctor_audio_cache"
-        cache_dir.mkdir(exist_ok=True)
-
-    iface.launch(debug=True, css=CSS, theme=gr.themes.Base(), allowed_paths=[str(cache_dir)])
+    iface.launch(debug=True, css=CSS, theme=gr.themes.Base(), allowed_paths=allowed_paths, head=HEAD)
