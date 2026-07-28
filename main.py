@@ -823,4 +823,14 @@ app = gr.mount_gradio_app(app, iface, path="/", allowed_paths=allowed_paths)
 
 
 if __name__ == "__main__":
-    iface.launch(debug=True, css=CSS, theme=gr.themes.Base(), allowed_paths=allowed_paths, head=HEAD)
+    server_name = os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0")
+    server_port = int(os.environ.get("PORT", os.environ.get("GRADIO_SERVER_PORT", "7860")))
+    iface.launch(
+        server_name=server_name,
+        server_port=server_port,
+        debug=True,
+        css=CSS,
+        theme=gr.themes.Base(),
+        allowed_paths=allowed_paths,
+        head=HEAD,
+    )
