@@ -9,8 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-AUDIO_CACHE_DIR = BASE_DIR / "doctor_audio_cache"
-AUDIO_CACHE_DIR.mkdir(exist_ok=True)
+try:
+    AUDIO_CACHE_DIR = BASE_DIR / "doctor_audio_cache"
+    AUDIO_CACHE_DIR.mkdir(exist_ok=True)
+except Exception:
+    import tempfile
+    AUDIO_CACHE_DIR = Path(tempfile.gettempdir()) / "doctor_audio_cache"
+    AUDIO_CACHE_DIR.mkdir(exist_ok=True)
 
 def convert_text_to_doctor_audio(text, output_filepath=None):
     deepgram_api_key = os.environ.get("DEEPGRAM_API_KEY")

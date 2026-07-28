@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import gradio as gr
+from fastapi import FastAPI
 
 #from brain_of_the_doctor import brain_of_the_doctor
 from brain_of_the_doctor_groq import brain_of_the_doctor
@@ -791,7 +792,17 @@ with gr.Blocks(title=APP_TITLE, head=HEAD) as iface:
     )
 
 
+app = FastAPI()
+app = gr.mount_gradio_app(app, iface, path="/")
+
+
 if __name__ == "__main__":
-    cache_dir = Path(__file__).parent / "doctor_audio_cache"
-    cache_dir.mkdir(exist_ok=True)
+    try:
+        cache_dir = Path(__file__).parent / "doctor_audio_cache"
+        cache_dir.mkdir(exist_ok=True)
+    except Exception:
+        import tempfile
+        cache_dir = Path(tempfile.gettempdir()) / "doctor_audio_cache"
+        cache_dir.mkdir(exist_ok=True)
+
     iface.launch(debug=True, css=CSS, theme=gr.themes.Base(), allowed_paths=[str(cache_dir)])
